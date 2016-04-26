@@ -24,6 +24,8 @@ import org.apache.maven.plugin.*;
 
 import com.github.jknack.handlebars.*;
 import com.github.jknack.handlebars.context.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BuildEventListener extends AbstractExecutionListener {
   private final File output;
@@ -73,52 +75,64 @@ public class BuildEventListener extends AbstractExecutionListener {
   }
 
   public void report() {
-    long buildStartTime = Long.MAX_VALUE;
-    for (Long start : startTimes.values()) {
-      buildStartTime = Math.min(buildStartTime, start);
-    }
-
-    long buildEndTime = 0;
-    for (Long end : endTimes.values()) {
-      buildEndTime = Math.max(buildEndTime, end);
-    }
-
-    List<Measure> measures = new ArrayList<Measure>();
-    for (String key : startTimes.keySet()) {
-      String[] keyParts = key.split("/");
-
-      Measure measure = new Measure();
-      measure.group = keyParts[0];
-      measure.project = keyParts[1];
-      measure.phase = keyParts[2];
-      measure.goal = keyParts[3];
-      measure.durationSeconds = (endTimes.get(key) - startTimes.get(key)) / 1000L;
-      measure.left = ((startTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime);
-      measure.width = (((endTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime)) - measure.left;
-      measures.add(measure);
-    }
-
-    Collections.sort(measures);
-
-    try {
-      String html = new Handlebars().compile("template").apply(Context.newBuilder(measures).resolver(FieldValueResolver.INSTANCE).build());
-      write(html);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+      long buildStartTime = Long.MAX_VALUE;
+      for (Long start : startTimes.values()) {
+          buildStartTime = Math.min(buildStartTime, start);
+      }     long buildEndTime = 0;
+      for (Long end : endTimes.values()) {
+          buildEndTime = Math.max(buildEndTime, end);
+      }     List<Measure> measures = new ArrayList<Measure>();
+      for (String key : startTimes.keySet()) {
+          String[] keyParts = key.split("/");
+          
+          Measure measure = new Measure();
+          measure.group = keyParts[0];
+          measure.project = keyParts[1];
+          measure.phase = keyParts[2];
+          measure.goal = keyParts[3];
+          measure.durationSeconds = (endTimes.get(key) - startTimes.get(key)) / 1000L;
+          measure.left = ((startTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime);
+          measure.width = (((endTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime)) - measure.left;
+          measures.add(measure);
+      }     
+      
+      Collections.sort(measures);
+      FileWriter writer = null;
+      try {
+          File path = output.getParentFile();
+          if (!path.exists()) {
+              if (!path.mkdirs()) {
+                  throw new IOException("Unable to create " + path);
+              }
+          }     
+          writer = new FileWriter(output);
+          writer.write("<measures>");
+          for(Measure measure : measures) {
+              write(writer, measure);
+          }     
+          writer.write("</measures>");
+          writer.close();
+      } catch (IOException ex) {
+          Logger.getLogger(BuildEventListener.class.getName()).log(Level.SEVERE, null, ex);
+      } finally {
+          try {
+              writer.close();
+          } catch (IOException ex) {
+              Logger.getLogger(BuildEventListener.class.getName()).log(Level.SEVERE, null, ex);
+          }
+      }
   }
 
-  private void write(String message) throws IOException {
-    File path = output.getParentFile();
-    if (!path.exists()) {
-      if (!path.mkdirs()) {
-        throw new IOException("Unable to create " + path);
-      }
-    }
-
-    FileWriter writer = new FileWriter(output);
-    writer.write(message);
-    writer.close();
+  private void write(FileWriter writer, Measure measure) throws IOException {
+    writer.write("  <measure");
+    writer.write(" group=\"" + measure.group + "\"");
+    writer.write(" project=\"" + measure.project + "\"");
+    writer.write(" phase=\"" + measure.phase + "\"");
+    writer.write(" goal=\"" + measure.goal + "\"");
+    writer.write(" durationSeconds=\"" + measure.durationSeconds + "\"");
+    writer.write(" left=\"" + measure.left + "\"");
+    writer.write(" width=\"" + measure.width + "\"");
+    writer.write(" />\n");
   }
 
   public static class Measure implements Comparable<Measure> {

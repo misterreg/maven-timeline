@@ -1,0 +1,42 @@
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>fake</groupId>
+  <artifactId>parent-longstep</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>create-component-list</id>
+            <phase>compile</phase>
+            <configuration>
+              <target>
+                <macrodef name="echotimestamp">
+                  <sequential>
+                    <local name="timestamp" />
+                    <tstamp>
+                      <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
+                    </tstamp>
+                    <echo message="${project.artifactId} ${timestamp}" />
+                  </sequential>
+                </macrodef>
+		<echotimestamp /> 
+                <sleep seconds="2"/>
+		<echotimestamp /> 
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>		
+</project>

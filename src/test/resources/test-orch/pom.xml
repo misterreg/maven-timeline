@@ -1,0 +1,27 @@
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>fake</groupId>
+  <artifactId>aggregator</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>step1</module>
+    <module>step2</module>
+    <module>step3</module>
+    <module>step4</module>
+    <module>step5</module>
+    <module>step6</module>
+    <module>parent-longstep</module>
+    <module>parent-failstep</module>
+  </modules>
+  <build>
+    <extensions>
+      <extension>
+        <groupId>net.gageot</groupId>
+        <artifactId>maven-timeline</artifactId>
+        <version>1.4-SNAPSHOT</version>
+      </extension>
+    </extensions>
+  </build>
+</project>
