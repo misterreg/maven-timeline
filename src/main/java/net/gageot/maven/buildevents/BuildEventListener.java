@@ -24,129 +24,57 @@ import org.apache.maven.plugin.*;
 
 import com.github.jknack.handlebars.*;
 import com.github.jknack.handlebars.context.*;
+
+import net.gageot.maven.TimelineDrawer;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.project.MavenProject;
 
 public class BuildEventListener extends AbstractExecutionListener {
-  private final File output;
-  private final Map<String, Long> startTimes = new ConcurrentHashMap<String, Long>();
-  private final Map<String, Long> endTimes = new ConcurrentHashMap<String, Long>();
+  private final Map<MavenProject, ProjectBuildInfo> buildInfo =
+      new ConcurrentHashMap<MavenProject, ProjectBuildInfo>();
+  private TimelineDrawer tl;
+  private Logger LOG = Logger.getLogger(BuildEventListener.class.getName());
 
-  public BuildEventListener(File output) {
-    this.output = output;
+  public BuildEventListener(TimelineDrawer tl) {
+    this.tl = tl;
+  }
+
+  private void ensureInfoExists (MavenProject project) {
+    if (!buildInfo.containsKey(project)) {
+      buildInfo.put(project, new ProjectBuildInfo());
+    }
+  }
+  
+  @Override
+  public void projectStarted(ExecutionEvent event) {
+    ensureInfoExists(event.getProject());
+    buildInfo.get(event.getProject()).setStartTime(System.currentTimeMillis());
+    LOG.info("project started " + event.getProject().getArtifactId());;
+  }
+  
+  @Override
+  public void projectFailed(ExecutionEvent event) {
+    ensureInfoExists(event.getProject());
+    buildInfo.get(event.getProject()).setEndTime(System.currentTimeMillis());
+    buildInfo.get(event.getProject()).setSuccess(false);
+    LOG.info("project failed " + event.getProject().getArtifactId());;
   }
 
   @Override
-  public void mojoStarted(ExecutionEvent event) {
-    startTimes.put(key(event), System.currentTimeMillis());
-  }
-
-  @Override
-  public void mojoSkipped(ExecutionEvent event) {
-    mojoEnd(event);
-  }
-
-  @Override
-  public void mojoSucceeded(ExecutionEvent event) {
-    mojoEnd(event);
-  }
-
-  @Override
-  public void mojoFailed(ExecutionEvent event) {
-    mojoEnd(event);
-  }
-
-  private void mojoEnd(ExecutionEvent event) {
-    endTimes.put(key(event), System.currentTimeMillis());
+  public void projectSucceeded(ExecutionEvent event) {
+    ensureInfoExists(event.getProject());
+    buildInfo.get(event.getProject()).setEndTime(System.currentTimeMillis());
+    buildInfo.get(event.getProject()).setSuccess(true);
+    LOG.info("project succeeded " + event.getProject().getArtifactId());;
   }
 
   @Override
   public void sessionEnded(ExecutionEvent event) {
-    report();
+    LOG.info("session ended");
+    tl.report(buildInfo, event.getSession().getProjects(), event.getSession());
   }
 
-  private String key(ExecutionEvent event) {
-    MojoExecution mojo = event.getMojoExecution();
-    String goal = mojo.getGoal();
-    String phase = mojo.getLifecyclePhase();
-    String group = event.getProject().getGroupId();
-    String project = event.getProject().getArtifactId();
-    return group + "/" + project + "/" + phase + "/" + goal;
-  }
-
-  public void report() {
-      long buildStartTime = Long.MAX_VALUE;
-      for (Long start : startTimes.values()) {
-          buildStartTime = Math.min(buildStartTime, start);
-      }     long buildEndTime = 0;
-      for (Long end : endTimes.values()) {
-          buildEndTime = Math.max(buildEndTime, end);
-      }     List<Measure> measures = new ArrayList<Measure>();
-      for (String key : startTimes.keySet()) {
-          String[] keyParts = key.split("/");
-          
-          Measure measure = new Measure();
-          measure.group = keyParts[0];
-          measure.project = keyParts[1];
-          measure.phase = keyParts[2];
-          measure.goal = keyParts[3];
-          measure.durationSeconds = (endTimes.get(key) - startTimes.get(key)) / 1000L;
-          measure.left = ((startTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime);
-          measure.width = (((endTimes.get(key) - buildStartTime) * 10000L) / (buildEndTime - buildStartTime)) - measure.left;
-          measures.add(measure);
-      }     
-      
-      Collections.sort(measures);
-      FileWriter writer = null;
-      try {
-          File path = output.getParentFile();
-          if (!path.exists()) {
-              if (!path.mkdirs()) {
-                  throw new IOException("Unable to create " + path);
-              }
-          }     
-          writer = new FileWriter(output);
-          writer.write("<measures>");
-          for(Measure measure : measures) {
-              write(writer, measure);
-          }     
-          writer.write("</measures>");
-          writer.close();
-      } catch (IOException ex) {
-          Logger.getLogger(BuildEventListener.class.getName()).log(Level.SEVERE, null, ex);
-      } finally {
-          try {
-              writer.close();
-          } catch (IOException ex) {
-              Logger.getLogger(BuildEventListener.class.getName()).log(Level.SEVERE, null, ex);
-          }
-      }
-  }
-
-  private void write(FileWriter writer, Measure measure) throws IOException {
-    writer.write("  <measure");
-    writer.write(" group=\"" + measure.group + "\"");
-    writer.write(" project=\"" + measure.project + "\"");
-    writer.write(" phase=\"" + measure.phase + "\"");
-    writer.write(" goal=\"" + measure.goal + "\"");
-    writer.write(" durationSeconds=\"" + measure.durationSeconds + "\"");
-    writer.write(" left=\"" + measure.left + "\"");
-    writer.write(" width=\"" + measure.width + "\"");
-    writer.write(" />\n");
-  }
-
-  public static class Measure implements Comparable<Measure> {
-    String group;
-    String project;
-    String phase;
-    String goal;
-    Long durationSeconds;
-    Long left;
-    Long width;
-
-    @Override
-    public int compareTo(Measure other) {
-      return left.compareTo(other.left);
-    }
-  }
 }

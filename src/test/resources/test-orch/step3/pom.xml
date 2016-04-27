@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>fake</groupId>
-    <artifactId>parent-failstep</artifactId>
+    <artifactId>parent-longstep</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../parent-failstep/pom.xml</relativePath>
+    <relativePath>../parent-longstep/pom.xml</relativePath>
   </parent>
   <artifactId>step3</artifactId>
   <packaging>pom</packaging>
@@ -17,4 +17,12 @@
       <type>pom</type>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>		
 </project>
