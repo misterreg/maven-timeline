@@ -74,7 +74,11 @@ public class BuildEventListener extends AbstractExecutionListener {
   @Override
   public void sessionEnded(ExecutionEvent event) {
     LOG.info("session ended");
-    tl.report(buildInfo, event.getSession().getProjects(), event.getSession());
+    try {
+      tl.report(buildInfo, event.getSession().getProjects(), event.getSession());
+    } catch (Exception e) {
+      LOG.info(e.getMessage());
+    }
   }
 
 }

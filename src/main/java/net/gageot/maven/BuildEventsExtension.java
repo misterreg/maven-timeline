@@ -40,6 +40,7 @@ public class BuildEventsExtension extends AbstractMavenLifecycleParticipant {
         BuildEventListener listener = new BuildEventListener(tl);
         ExecutionListener chain = new ExecutionListenerChain(original, listener);
         
+        request.setExecutionListener(chain);
     }
 
 }

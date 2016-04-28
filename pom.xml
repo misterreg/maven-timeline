@@ -98,6 +98,26 @@
       <artifactId>jgrapht-ext</artifactId>
       <version>0.9.3</version>
     </dependency>
+<!--     <dependency>
+      <groupId>org.jfree</groupId>
+      <artifactId>jfreesvg</artifactId>
+      <version>3.0</version>
+    </dependency>-->
+    <dependency>
+      <groupId>org.apache.xmlgraphics</groupId>
+      <artifactId>batik-dom</artifactId>
+      <version>1.8</version>
+    </dependency>
+    <dependency>
+      <groupId>batik</groupId>
+      <artifactId>batik-svg-dom</artifactId>
+      <version>1.7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.xmlgraphics</groupId>
+      <artifactId>batik-svggen</artifactId>
+      <version>1.7</version>
+    </dependency>
   </dependencies>
 
   <build>
