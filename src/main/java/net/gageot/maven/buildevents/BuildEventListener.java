@@ -33,8 +33,8 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
 public class BuildEventListener extends AbstractExecutionListener {
-  private final Map<MavenProject, ProjectBuildInfo> buildInfo =
-      new ConcurrentHashMap<MavenProject, ProjectBuildInfo>();
+  private final Map<String, ProjectBuildInfo> buildInfo =
+      new ConcurrentHashMap<String, ProjectBuildInfo>();
   private TimelineDrawer tl;
   private Logger LOG = Logger.getLogger(BuildEventListener.class.getName());
 
@@ -42,40 +42,80 @@ public class BuildEventListener extends AbstractExecutionListener {
     this.tl = tl;
   }
 
-  private void ensureInfoExists (MavenProject project) {
-    if (!buildInfo.containsKey(project)) {
-      buildInfo.put(project, new ProjectBuildInfo());
+  private void ensureInfoExists (String key) {
+    if (!buildInfo.containsKey(key)) {
+      buildInfo.put(key, new ProjectBuildInfo());
     }
   }
   
   @Override
   public void projectStarted(ExecutionEvent event) {
-    ensureInfoExists(event.getProject());
-    buildInfo.get(event.getProject()).setStartTime(System.currentTimeMillis());
-    LOG.info("project started " + event.getProject().getArtifactId());;
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    ensureInfoExists(key);
+    buildInfo.get(key).setStartTime(System.currentTimeMillis());
+    LOG.info("project started " + key);;
   }
   
   @Override
   public void projectFailed(ExecutionEvent event) {
-    ensureInfoExists(event.getProject());
-    buildInfo.get(event.getProject()).setEndTime(System.currentTimeMillis());
-    buildInfo.get(event.getProject()).setSuccess(false);
-    LOG.info("project failed " + event.getProject().getArtifactId());;
+    
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    ensureInfoExists(key);
+    buildInfo.get(key).setEndTime(System.currentTimeMillis());
+    buildInfo.get(key).setSuccess(2);
+    LOG.info("project failed " + key);;
   }
 
   @Override
   public void projectSucceeded(ExecutionEvent event) {
-    ensureInfoExists(event.getProject());
-    buildInfo.get(event.getProject()).setEndTime(System.currentTimeMillis());
-    buildInfo.get(event.getProject()).setSuccess(true);
-    LOG.info("project succeeded " + event.getProject().getArtifactId());;
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    ensureInfoExists(key);
+    buildInfo.get(key).setEndTime(System.currentTimeMillis());
+    buildInfo.get(key).setSuccess(1);
+    LOG.info("project suceeded " + key);;
   }
 
+  @Override
+  public void forkStarted(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork started " + key);;
+  }
+
+  @Override
+  public void forkFailed(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork failed " + key);;
+  }
+
+  @Override
+  public void forkSucceeded(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork suceeded " + key);;
+  }
+  
+  @Override
+  public void forkedProjectStarted(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork project started " + key);;
+  }
+
+  @Override
+  public void forkedProjectFailed(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork project failed " + key);;
+  }
+  
+  @Override
+  public void forkedProjectSucceeded(ExecutionEvent event) {
+    String key = ProjectBuildInfo.getProjectKey(event.getProject());
+    LOG.info("fork project succeeded " + key);;
+  }
+  
   @Override
   public void sessionEnded(ExecutionEvent event) {
     LOG.info("session ended");
     try {
-      tl.report(buildInfo, event.getSession().getProjects(), event.getSession());
+      tl.report(buildInfo, event.getSession());
     } catch (Exception e) {
       LOG.info(e.getMessage());
     }

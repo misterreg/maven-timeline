@@ -1,9 +1,19 @@
 package net.gageot.maven.buildevents;
 
+import org.apache.maven.model.Dependency;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.StringUtils;
+
 public class ProjectBuildInfo {
   private Long startTime;
   private Long endTime;
-  private Boolean success;
+  private int success = 0;
+  public int getSuccess() {
+    return success;
+  }
+  public void setSuccess(int success) {
+    this.success = success;
+  }
   public Long getStartTime() {
     return startTime;
   }
@@ -16,11 +26,11 @@ public class ProjectBuildInfo {
   public void setEndTime(Long endTime) {
     this.endTime = endTime;
   }
-  public Boolean getSuccess() {
-    return success;
-  }
-  public void setSuccess(Boolean success) {
-    this.success = success;
-  }
   
+  public static String getProjectKey (MavenProject prj) {
+    return prj.getArtifactId();
+  }
+  public static String getDependencyKey(Dependency d) {
+    return d.getArtifactId();
+  }
 }

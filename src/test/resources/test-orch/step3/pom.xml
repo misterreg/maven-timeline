@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>fake</groupId>
-    <artifactId>parent-longstep</artifactId>
+    <artifactId>parent-failstep</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../parent-longstep/pom.xml</relativePath>
+    <relativePath>../parent-failstep/pom.xml</relativePath>
   </parent>
   <artifactId>step3</artifactId>
   <packaging>pom</packaging>
